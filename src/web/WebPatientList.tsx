@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Search, Filter, Plus, Eye, ChevronLeft, ChevronRight, X, Link2 } from 'lucide-react';
 import { mockWebPatients, type PatientStatus } from '../data/mock';
+import { useRole } from '../context/RoleContext';
 
 const statusConfig: Record<PatientStatus, { label: string; className: string }> = {
   ordered: { label: 'Ordered', className: 'bg-gray-100 text-gray-700' },
@@ -13,7 +14,12 @@ const statusConfig: Record<PatientStatus, { label: string; className: string }> 
 };
 
 export default function WebPatientList() {
+  const { role } = useRole();
   const navigate = useNavigate();
+  useEffect(() => {
+    if (role !== 'physician') navigate('/web/kits', { replace: true });
+  }, [role, navigate]);
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -24,13 +30,16 @@ export default function WebPatientList() {
     email: '',
     phone: '',
   });
+  const [linkPid, setLinkPid] = useState('');
+  const [linkSuccess, setLinkSuccess] = useState(false);
 
   const filteredPatients = mockWebPatients.filter((p) => {
     const matchesSearch =
       !search ||
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.id.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = !statusFilter || p.status === statusFilter;
+      p.id.toLowerCase().includes(search.toLowerCase()) ||
+      p.patientId.toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = !statusFilter || p.latestStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -38,6 +47,8 @@ export default function WebPatientList() {
     e.preventDefault();
     setShowAddModal(false);
     setNewPatient({ firstName: '', lastName: '', dateOfBirth: '', email: '', phone: '' });
+    setLinkPid('');
+    setLinkSuccess(false);
   };
 
   return (
@@ -102,25 +113,29 @@ export default function WebPatientList() {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Patient ID</th>
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Name</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-500">Date of Birth</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-500">Active Kit</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-500">Kit Status</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-500">PID</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-500">Kits</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-500">Latest Kit Status</th>
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Last Updated</th>
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredPatients.map((patient) => {
-                  const status = patient.status ? statusConfig[patient.status] : null;
+                  const status = patient.latestStatus ? statusConfig[patient.latestStatus] : null;
                   return (
                     <tr key={patient.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 font-mono text-xs text-gray-500">{patient.id}</td>
                       <td className="px-6 py-4 font-medium text-gray-900">
                         {patient.name}
                       </td>
-                      <td className="px-6 py-4 text-gray-600">{patient.dateOfBirth}</td>
-                      <td className="px-6 py-4 font-mono text-xs text-gray-500">
-                        {patient.activeKit || '\u2014'}
+                      <td className="px-6 py-4 font-mono text-xs text-blue-600">
+                        {patient.patientId || '\u2014'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold">
+                          {patient.kits.length}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         {status ? (
@@ -249,6 +264,34 @@ export default function WebPatientList() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              {/* Link Patient ID */}
+              <div className="pt-2 border-t border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <Link2 className="w-3.5 h-3.5 inline mr-1" />
+                  Link Patient ID (Mobile PID)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="PID-XXXX"
+                    value={linkPid}
+                    onChange={(e) => { setLinkPid(e.target.value); setLinkSuccess(false); }}
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => { if (linkPid.trim()) setLinkSuccess(true); }}
+                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Link
+                  </button>
+                </div>
+                {linkSuccess && (
+                  <p className="text-xs text-green-600 mt-1.5 font-medium">Patient linked successfully</p>
+                )}
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"

@@ -3,14 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, Save, SendHorizonal, CheckCircle2 } from 'lucide-react';
 import { mockClinicalData as clinicalDataArr, mockWebPatients } from '../data/mock';
 
-const clinData = clinicalDataArr[0];
-
 export default function WebClinicalData() {
-  const { kitId } = useParams<{ kitId: string }>();
+  const { patientId } = useParams<{ patientId: string }>();
   const navigate = useNavigate();
 
-  const displayKitId = kitId || 'PST-2026-A1B2';
-  const patient = mockWebPatients.find((p) => p.activeKit === displayKitId) || mockWebPatients[0];
+  const patient = mockWebPatients.find((p) => p.id === patientId) || mockWebPatients[0];
+  const clinData = clinicalDataArr.find((c) => c.patientId === (patientId || 'pat-001')) || clinicalDataArr[0];
 
   const [psaLevel, setPsaLevel] = useState(clinData.psaLevel.toString());
   const [gleasonScore, setGleasonScore] = useState(clinData.gleasonScore);
@@ -68,9 +66,9 @@ export default function WebClinicalData() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Clinical Data Entry</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Clinical Data &mdash; {patient.name}</h1>
               <p className="text-sm text-gray-500 mt-0.5">
-                Kit ID: <span className="font-mono">{displayKitId}</span>
+                Patient ID: <span className="font-mono">{patientId}</span>
               </p>
             </div>
 

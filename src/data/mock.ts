@@ -11,6 +11,7 @@ export type DeletionStatus = 'active' | 'pending_deletion' | 'deleted';
 export interface Patient {
   id: string;
   anonymousId: string;
+  patientId: string; // Self-registration ID shown to patient (e.g. "PID-7F3A")
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -35,6 +36,7 @@ export interface Kit {
   patientId: string;
   status: KitStatus;
   orderedBy: string;
+  registeredByPatient: boolean;
   registeredAt: string | null;
   sampleReceivedAt: string | null;
   orderedAt: string;
@@ -137,6 +139,54 @@ export interface Notification {
   createdAt: string;
 }
 
+// Physician-Patient linking entity
+export interface PhysicianPatient {
+  id: string;
+  physicianUserId: string;
+  patientId: string;
+  linkedPatientId: string | null; // patient's self-reg PID, null if not linked
+  notes: string;
+  createdAt: string;
+}
+
+// MRI Data — per patient, paired with a kit
+export type MriType = 'mpMRI' | 'T2W' | 'DWI' | 'DCE';
+
+export interface MriData {
+  id: string;
+  patientId: string;
+  kitId: string;
+  uploadedBy: string;
+  uploadedByRole: UserRole;
+  fileName: string;
+  fileSize: string;
+  mriType: MriType;
+  piradsScore: number | null;
+  notes: string;
+  uploadedAt: string;
+}
+
+// Survey Data — per kit, filled by patient
+export interface SurveyData {
+  id: string;
+  kitId: string;
+  patientId: string;
+  urinarySymptoms: boolean;
+  painOrDiscomfort: boolean;
+  bloodInUrine: boolean;
+  frequentUrination: boolean;
+  difficultyUrinating: boolean;
+  familyHistoryProstateCancer: boolean;
+  familyHistoryOtherCancer: boolean;
+  familyRelationship: string;
+  currentMedications: string;
+  previousBiopsy: boolean;
+  previousSurgery: boolean;
+  previousRadiation: boolean;
+  procedureDetails: string;
+  completedAt: string;
+}
+
 // -----------------------------------------------------------------------------
 // Mock Users
 // -----------------------------------------------------------------------------
@@ -192,6 +242,7 @@ export const mockPatients: Patient[] = [
   {
     id: 'pat-001',
     anonymousId: 'ANON-7F3A9D',
+    patientId: 'PID-7F3A',
     firstName: 'Hans',
     lastName: 'M\u00fcller',
     dateOfBirth: '1958-03-14',
@@ -203,6 +254,7 @@ export const mockPatients: Patient[] = [
   {
     id: 'pat-002',
     anonymousId: 'ANON-2B8E4C',
+    patientId: 'PID-2B8E',
     firstName: 'Karl',
     lastName: 'Schneider',
     dateOfBirth: '1962-07-22',
@@ -214,6 +266,7 @@ export const mockPatients: Patient[] = [
   {
     id: 'pat-003',
     anonymousId: 'ANON-5D1F7B',
+    patientId: 'PID-5D1F',
     firstName: 'Peter',
     lastName: 'Braun',
     dateOfBirth: '1955-11-08',
@@ -225,6 +278,7 @@ export const mockPatients: Patient[] = [
   {
     id: 'pat-004',
     anonymousId: 'ANON-9C6A2E',
+    patientId: 'PID-9C6A',
     firstName: 'Jean-Pierre',
     lastName: 'Dubois',
     dateOfBirth: '1960-01-30',
@@ -236,6 +290,7 @@ export const mockPatients: Patient[] = [
   {
     id: 'pat-005',
     anonymousId: 'ANON-4E8D1A',
+    patientId: 'PID-4E8D',
     firstName: 'Marco',
     lastName: 'Rossi',
     dateOfBirth: '1967-09-05',
@@ -247,6 +302,7 @@ export const mockPatients: Patient[] = [
   {
     id: 'pat-006',
     anonymousId: 'ANON-8B3F6C',
+    patientId: 'PID-8B3F',
     firstName: 'Wolfgang',
     lastName: 'Schmidt',
     dateOfBirth: '1953-05-19',
@@ -268,6 +324,7 @@ export const mockKits: Kit[] = [
     patientId: 'pat-001',
     status: 'results_available',
     orderedBy: 'usr-001',
+    registeredByPatient: true,
     registeredAt: '2026-01-10T09:15:00Z',
     sampleReceivedAt: '2026-01-14T11:30:00Z',
     orderedAt: '2026-01-06T08:00:00Z',
@@ -282,6 +339,7 @@ export const mockKits: Kit[] = [
     patientId: 'pat-002',
     status: 'results_available',
     orderedBy: 'usr-001',
+    registeredByPatient: false,
     registeredAt: '2026-01-18T10:00:00Z',
     sampleReceivedAt: '2026-01-22T09:45:00Z',
     orderedAt: '2026-01-15T11:30:00Z',
@@ -296,6 +354,7 @@ export const mockKits: Kit[] = [
     patientId: 'pat-003',
     status: 'analysis_complete',
     orderedBy: 'usr-005',
+    registeredByPatient: false,
     registeredAt: '2026-02-03T14:20:00Z',
     sampleReceivedAt: '2026-02-07T10:15:00Z',
     orderedAt: '2026-01-29T09:00:00Z',
@@ -310,6 +369,7 @@ export const mockKits: Kit[] = [
     patientId: 'pat-004',
     status: 'processing',
     orderedBy: 'usr-001',
+    registeredByPatient: false,
     registeredAt: '2026-02-14T08:45:00Z',
     sampleReceivedAt: '2026-02-18T12:00:00Z',
     orderedAt: '2026-02-10T10:00:00Z',
@@ -324,6 +384,7 @@ export const mockKits: Kit[] = [
     patientId: 'pat-005',
     status: 'sample_received',
     orderedBy: 'usr-005',
+    registeredByPatient: false,
     registeredAt: '2026-02-20T11:30:00Z',
     sampleReceivedAt: '2026-02-25T09:00:00Z',
     orderedAt: '2026-02-17T14:00:00Z',
@@ -338,6 +399,7 @@ export const mockKits: Kit[] = [
     patientId: 'pat-006',
     status: 'results_available',
     orderedBy: 'usr-005',
+    registeredByPatient: false,
     registeredAt: '2025-12-02T09:00:00Z',
     sampleReceivedAt: '2025-12-06T10:30:00Z',
     orderedAt: '2025-11-28T13:00:00Z',
@@ -352,6 +414,7 @@ export const mockKits: Kit[] = [
     patientId: 'pat-001',
     status: 'shipped',
     orderedBy: 'usr-001',
+    registeredByPatient: true,
     registeredAt: null,
     sampleReceivedAt: null,
     orderedAt: '2026-02-26T09:30:00Z',
@@ -366,6 +429,7 @@ export const mockKits: Kit[] = [
     patientId: 'pat-002',
     status: 'ordered',
     orderedBy: 'usr-001',
+    registeredByPatient: false,
     registeredAt: null,
     sampleReceivedAt: null,
     orderedAt: '2026-03-01T08:00:00Z',
@@ -812,6 +876,142 @@ export const mockNotifications: Notification[] = [
 ];
 
 // -----------------------------------------------------------------------------
+// Mock Physician-Patient Links
+// -----------------------------------------------------------------------------
+
+export const mockPhysicianPatients: PhysicianPatient[] = [
+  { id: 'pp-001', physicianUserId: 'usr-001', patientId: 'pat-001', linkedPatientId: 'PID-7F3A', notes: 'Follow-up patient, active surveillance', createdAt: '2025-11-15T09:00:00Z' },
+  { id: 'pp-002', physicianUserId: 'usr-001', patientId: 'pat-002', linkedPatientId: 'PID-2B8E', notes: '', createdAt: '2025-12-01T10:30:00Z' },
+  { id: 'pp-003', physicianUserId: 'usr-001', patientId: 'pat-004', linkedPatientId: null, notes: 'Referred from Dr. Schmidt', createdAt: '2026-02-08T14:00:00Z' },
+  { id: 'pp-004', physicianUserId: 'usr-005', patientId: 'pat-003', linkedPatientId: 'PID-5D1F', notes: 'High PSA, urgent workup', createdAt: '2026-01-25T08:00:00Z' },
+  { id: 'pp-005', physicianUserId: 'usr-005', patientId: 'pat-005', linkedPatientId: null, notes: 'Screening patient', createdAt: '2026-02-15T11:00:00Z' },
+  { id: 'pp-006', physicianUserId: 'usr-005', patientId: 'pat-006', linkedPatientId: 'PID-8B3F', notes: 'GDPR deletion requested', createdAt: '2025-11-20T09:00:00Z' },
+];
+
+// -----------------------------------------------------------------------------
+// Mock MRI Data
+// -----------------------------------------------------------------------------
+
+export const mockMriData: MriData[] = [
+  {
+    id: 'mri-001',
+    patientId: 'pat-001',
+    kitId: 'kit-001',
+    uploadedBy: 'usr-001',
+    uploadedByRole: 'physician',
+    fileName: 'pat001_mpMRI_20260112.dcm',
+    fileSize: '24.5 MB',
+    mriType: 'mpMRI',
+    piradsScore: 3,
+    notes: 'Multiparametric MRI showing 12mm lesion in peripheral zone, right mid-gland',
+    uploadedAt: '2026-01-12T14:30:00Z',
+  },
+  {
+    id: 'mri-002',
+    patientId: 'pat-003',
+    kitId: 'kit-003',
+    uploadedBy: 'usr-003',
+    uploadedByRole: 'lab_supervisor',
+    fileName: 'pat003_mpMRI_20260205.dcm',
+    fileSize: '31.2 MB',
+    mriType: 'mpMRI',
+    piradsScore: 4,
+    notes: 'Suspicious lesion in left peripheral zone, 18mm, restricted diffusion',
+    uploadedAt: '2026-02-05T10:00:00Z',
+  },
+  {
+    id: 'mri-003',
+    patientId: 'pat-006',
+    kitId: 'kit-006',
+    uploadedBy: 'usr-005',
+    uploadedByRole: 'physician',
+    fileName: 'pat006_mpMRI_20251204.dcm',
+    fileSize: '28.7 MB',
+    mriType: 'mpMRI',
+    piradsScore: 5,
+    notes: 'Large lesion right peripheral zone with extracapsular extension suspected',
+    uploadedAt: '2025-12-04T16:00:00Z',
+  },
+  {
+    id: 'mri-004',
+    patientId: 'pat-001',
+    kitId: 'kit-001',
+    uploadedBy: 'usr-003',
+    uploadedByRole: 'lab_supervisor',
+    fileName: 'pat001_T2W_20260113.dcm',
+    fileSize: '18.3 MB',
+    mriType: 'T2W',
+    piradsScore: null,
+    notes: 'T2-weighted supplementary images',
+    uploadedAt: '2026-01-13T09:00:00Z',
+  },
+];
+
+// -----------------------------------------------------------------------------
+// Mock Survey Data
+// -----------------------------------------------------------------------------
+
+export const mockSurveyData: SurveyData[] = [
+  {
+    id: 'survey-001',
+    kitId: 'kit-001',
+    patientId: 'pat-001',
+    urinarySymptoms: true,
+    painOrDiscomfort: false,
+    bloodInUrine: false,
+    frequentUrination: true,
+    difficultyUrinating: true,
+    familyHistoryProstateCancer: true,
+    familyHistoryOtherCancer: false,
+    familyRelationship: 'Father',
+    currentMedications: 'Tamsulosin 0.4mg daily, Metformin 500mg twice daily, Lisinopril 10mg daily',
+    previousBiopsy: true,
+    previousSurgery: false,
+    previousRadiation: false,
+    procedureDetails: 'TRUS-guided biopsy in 2024, 12 cores, Gleason 3+3 in 2 cores',
+    completedAt: '2026-01-10T09:30:00Z',
+  },
+  {
+    id: 'survey-002',
+    kitId: 'kit-002',
+    patientId: 'pat-002',
+    urinarySymptoms: false,
+    painOrDiscomfort: false,
+    bloodInUrine: false,
+    frequentUrination: false,
+    difficultyUrinating: false,
+    familyHistoryProstateCancer: false,
+    familyHistoryOtherCancer: true,
+    familyRelationship: 'Mother (breast cancer)',
+    currentMedications: 'Atorvastatin 20mg daily',
+    previousBiopsy: false,
+    previousSurgery: false,
+    previousRadiation: false,
+    procedureDetails: '',
+    completedAt: '2026-01-18T10:15:00Z',
+  },
+  {
+    id: 'survey-003',
+    kitId: 'kit-006',
+    patientId: 'pat-006',
+    urinarySymptoms: true,
+    painOrDiscomfort: true,
+    bloodInUrine: true,
+    frequentUrination: true,
+    difficultyUrinating: true,
+    familyHistoryProstateCancer: true,
+    familyHistoryOtherCancer: false,
+    familyRelationship: 'Brother',
+    currentMedications: 'Amlodipine 5mg daily, Furosemide 40mg daily, Allopurinol 300mg daily',
+    previousBiopsy: true,
+    previousSurgery: true,
+    previousRadiation: false,
+    procedureDetails: 'TURP in 2020 for BPH, TRUS biopsy 2023 showing Gleason 4+3',
+    completedAt: '2025-12-02T09:15:00Z',
+  },
+];
+
+// -----------------------------------------------------------------------------
 // Dashboard Summary (derived convenience data)
 // -----------------------------------------------------------------------------
 
@@ -842,24 +1042,51 @@ export const mockDashboardSummary = {
 // Convenience exports for Mobile screens
 // =============================================================================
 
-/** Single patient user for the mobile app */
-export const mockUser = {
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'john.doe@email.com',
+/** Mobile patient (uses actual patient data) */
+export const mockMobilePatient = {
+  ...mockPatients[0],
+  // pat-001: Hans Müller, PID-7F3A
 };
 
-/** Single kit for the mobile status screen */
-export const mockKit = {
-  kitId: 'PST-2024-0847',
+/** All kits for the mobile patient */
+export const mockMobileKits = mockKits.filter(k => k.patientId === 'pat-001');
+
+/** Stage status type for mobile timeline */
+export type StageStatus = 'completed' | 'in-progress' | 'pending';
+
+export interface KitStage {
+  id: number;
+  title: string;
+  date: string;
+  status: StageStatus;
+  description: string;
+}
+
+/** Single kit for the mobile status screen (the in-progress one) */
+export const mockKit: { kitId: string; stages: KitStage[]; estimatedCompletion: string } = {
+  kitId: 'PST-2026-M3N4',
   stages: [
-    { id: 1, title: 'Kit Registered', date: 'Feb 15, 2025', status: 'completed' as const, description: '' },
-    { id: 2, title: 'Sample Received', date: 'Feb 18, 2025', status: 'completed' as const, description: '' },
-    { id: 3, title: 'Processing', date: 'Feb 19, 2025', status: 'in-progress' as const, description: 'Your sample is being analyzed using CE-MS proteomics. This typically takes 3-5 business days.' },
-    { id: 4, title: 'Analysis Complete', date: '', status: 'pending' as const, description: '' },
-    { id: 5, title: 'Results Available', date: '', status: 'pending' as const, description: '' },
+    { id: 1, title: 'Kit Ordered', date: 'Feb 26, 2026', status: 'completed', description: '' },
+    { id: 2, title: 'Kit Shipped', date: 'Feb 27, 2026', status: 'completed', description: '' },
+    { id: 3, title: 'Kit Registered', date: '', status: 'pending', description: 'Register your kit using the QR code or kit ID.' },
+    { id: 4, title: 'Sample Received', date: '', status: 'pending', description: '' },
+    { id: 5, title: 'Processing', date: '', status: 'pending', description: '' },
+    { id: 6, title: 'Results Available', date: '', status: 'pending', description: '' },
   ],
-  estimatedCompletion: '3-5 business days',
+  estimatedCompletion: '2-3 weeks',
+};
+
+/** Completed kit for mobile results */
+export const mockCompletedKit: { kitId: string; stages: KitStage[]; estimatedCompletion: string } = {
+  kitId: 'PST-2026-A1B2',
+  stages: [
+    { id: 1, title: 'Kit Registered', date: 'Jan 10, 2026', status: 'completed', description: '' },
+    { id: 2, title: 'Sample Received', date: 'Jan 14, 2026', status: 'completed', description: '' },
+    { id: 3, title: 'Processing', date: 'Jan 15, 2026', status: 'completed', description: '' },
+    { id: 4, title: 'Analysis Complete', date: 'Jan 18, 2026', status: 'completed', description: '' },
+    { id: 5, title: 'Results Available', date: 'Jan 20, 2026', status: 'completed', description: '' },
+  ],
+  estimatedCompletion: 'Complete',
 };
 
 /** Single AI result for the mobile results screen */
@@ -875,6 +1102,13 @@ export const mockResult = {
     'A LOW risk classification suggests that your prostate cancer is unlikely to progress aggressively. Your current Active Surveillance plan remains appropriate. Continue with regular PSA testing and follow-up appointments as recommended by your physician. This result does not replace professional medical advice.',
   physicianNote:
     'Results are consistent with stable low-grade disease. Recommend continuing Active Surveillance with next PSA check in 6 months and repeat biopsy in 12 months per protocol.',
+};
+
+export const mockUser = {
+  firstName: 'Hans',
+  lastName: 'Müller',
+  email: 'h.mueller@email.de',
+  patientId: 'PID-7F3A',
 };
 
 // =============================================================================
@@ -918,21 +1152,23 @@ export interface WebPatient {
   id: string;
   name: string;
   anonymousId: string;
+  patientId: string; // Self-registration ID
   dateOfBirth: string;
   email: string;
   phone: string;
-  activeKit: string;
-  status: PatientStatus;
+  kits: string[]; // Array of kit IDs
+  latestKitId: string; // Most recent kit
+  latestStatus: PatientStatus;
   lastUpdated: string;
 }
 
 export const mockWebPatients: WebPatient[] = [
-  { id: 'pat-001', name: 'Hans Müller', anonymousId: 'ANON-7F3A9D', dateOfBirth: '1958-03-14', email: 'h.mueller@email.de', phone: '+49 170 1234567', activeKit: 'PST-2026-A1B2', status: 'results_available', lastUpdated: '2026-01-20' },
-  { id: 'pat-002', name: 'Karl Schneider', anonymousId: 'ANON-2B8E4C', dateOfBirth: '1962-07-22', email: 'k.schneider@email.de', phone: '+49 171 2345678', activeKit: 'PST-2026-C3D4', status: 'results_available', lastUpdated: '2026-01-28' },
-  { id: 'pat-003', name: 'Peter Braun', anonymousId: 'ANON-5D1F7B', dateOfBirth: '1955-11-08', email: 'p.braun@email.de', phone: '+49 172 3456789', activeKit: 'PST-2026-E5F6', status: 'analysis_complete', lastUpdated: '2026-02-11' },
-  { id: 'pat-004', name: 'Jean-Pierre Dubois', anonymousId: 'ANON-9C6A2E', dateOfBirth: '1960-01-30', email: 'jp.dubois@email.fr', phone: '+33 6 12 34 56 78', activeKit: 'PST-2026-G7H8', status: 'processing', lastUpdated: '2026-02-19' },
-  { id: 'pat-005', name: 'Marco Rossi', anonymousId: 'ANON-4E8D1A', dateOfBirth: '1967-09-05', email: 'm.rossi@email.it', phone: '+39 320 1234567', activeKit: 'PST-2026-I9J0', status: 'sample_received', lastUpdated: '2026-02-25' },
-  { id: 'pat-006', name: 'Wolfgang Schmidt', anonymousId: 'ANON-8B3F6C', dateOfBirth: '1953-05-19', email: 'w.schmidt@email.de', phone: '+49 173 4567890', activeKit: 'PST-2026-K1L2', status: 'results_available', lastUpdated: '2025-12-12' },
+  { id: 'pat-001', name: 'Hans Müller', anonymousId: 'ANON-7F3A9D', patientId: 'PID-7F3A', dateOfBirth: '1958-03-14', email: 'h.mueller@email.de', phone: '+49 170 1234567', kits: ['PST-2026-A1B2', 'PST-2026-M3N4'], latestKitId: 'PST-2026-M3N4', latestStatus: 'results_available', lastUpdated: '2026-02-27' },
+  { id: 'pat-002', name: 'Karl Schneider', anonymousId: 'ANON-2B8E4C', patientId: 'PID-2B8E', dateOfBirth: '1962-07-22', email: 'k.schneider@email.de', phone: '+49 171 2345678', kits: ['PST-2026-C3D4', 'PST-2026-O5P6'], latestKitId: 'PST-2026-O5P6', latestStatus: 'results_available', lastUpdated: '2026-03-01' },
+  { id: 'pat-003', name: 'Peter Braun', anonymousId: 'ANON-5D1F7B', patientId: 'PID-5D1F', dateOfBirth: '1955-11-08', email: 'p.braun@email.de', phone: '+49 172 3456789', kits: ['PST-2026-E5F6'], latestKitId: 'PST-2026-E5F6', latestStatus: 'analysis_complete', lastUpdated: '2026-02-11' },
+  { id: 'pat-004', name: 'Jean-Pierre Dubois', anonymousId: 'ANON-9C6A2E', patientId: 'PID-9C6A', dateOfBirth: '1960-01-30', email: 'jp.dubois@email.fr', phone: '+33 6 12 34 56 78', kits: ['PST-2026-G7H8'], latestKitId: 'PST-2026-G7H8', latestStatus: 'processing', lastUpdated: '2026-02-19' },
+  { id: 'pat-005', name: 'Marco Rossi', anonymousId: 'ANON-4E8D1A', patientId: 'PID-4E8D', dateOfBirth: '1967-09-05', email: 'm.rossi@email.it', phone: '+39 320 1234567', kits: ['PST-2026-I9J0'], latestKitId: 'PST-2026-I9J0', latestStatus: 'sample_received', lastUpdated: '2026-02-25' },
+  { id: 'pat-006', name: 'Wolfgang Schmidt', anonymousId: 'ANON-8B3F6C', patientId: 'PID-8B3F', dateOfBirth: '1953-05-19', email: 'w.schmidt@email.de', phone: '+49 173 4567890', kits: ['PST-2026-K1L2'], latestKitId: 'PST-2026-K1L2', latestStatus: 'results_available', lastUpdated: '2025-12-12' },
 ];
 
 /** Single AI result for web detail view */

@@ -11,13 +11,23 @@ import {
   ChevronUp,
   ShieldCheck,
   MessageSquare,
+  Info,
 } from 'lucide-react';
-import { mockResult } from '../data/mock';
+import { mockResult, mockMobileKits } from '../data/mock';
 
 export default function MobileResults() {
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedWhat, setExpandedWhat] = useState(false);
+
+  // Filter kits with results
+  const resultsKits = mockMobileKits.filter(
+    (k) => k.status === 'results_available'
+  );
+
+  const [selectedKitId, setSelectedKitId] = useState(
+    resultsKits[0]?.kitId || ''
+  );
 
   const tabs = [
     { label: 'Home', icon: Home, route: '/mobile/home' },
@@ -54,23 +64,111 @@ export default function MobileResults() {
   };
 
   // Background arc path (full semicircle)
-  const bgStart = polarToCartesian(gaugeCenterX, gaugeCenterY, gaugeRadius, startAngle);
-  const bgEnd = polarToCartesian(gaugeCenterX, gaugeCenterY, gaugeRadius, endAngle);
+  const bgStart = polarToCartesian(
+    gaugeCenterX,
+    gaugeCenterY,
+    gaugeRadius,
+    startAngle
+  );
+  const bgEnd = polarToCartesian(
+    gaugeCenterX,
+    gaugeCenterY,
+    gaugeRadius,
+    endAngle
+  );
   const bgArcPath = `M ${bgStart.x} ${bgStart.y} A ${gaugeRadius} ${gaugeRadius} 0 0 1 ${bgEnd.x} ${bgEnd.y}`;
 
   // Score arc path
   const scoreEndAngle = startAngle - scoreAngle;
-  const scoreEnd = polarToCartesian(gaugeCenterX, gaugeCenterY, gaugeRadius, scoreEndAngle);
+  const scoreEnd = polarToCartesian(
+    gaugeCenterX,
+    gaugeCenterY,
+    gaugeRadius,
+    scoreEndAngle
+  );
   const largeArcFlag = scoreAngle > 180 ? 1 : 0;
   const scoreArcPath = `M ${bgStart.x} ${bgStart.y} A ${gaugeRadius} ${gaugeRadius} 0 ${largeArcFlag} 1 ${scoreEnd.x} ${scoreEnd.y}`;
 
   const riskColorMap = {
-    LOW: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200', accent: '#22c55e', label: 'Low Risk' },
-    INTERMEDIATE: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', accent: '#f59e0b', label: 'Intermediate Risk' },
-    HIGH: { bg: 'bg-red-50', text: 'text-red-700', border: 'border-red-200', accent: '#ef4444', label: 'High Risk' },
+    LOW: {
+      bg: 'bg-green-50',
+      text: 'text-green-700',
+      border: 'border-green-200',
+      accent: '#22c55e',
+      label: 'Low Risk',
+    },
+    INTERMEDIATE: {
+      bg: 'bg-amber-50',
+      text: 'text-amber-700',
+      border: 'border-amber-200',
+      accent: '#f59e0b',
+      label: 'Intermediate Risk',
+    },
+    HIGH: {
+      bg: 'bg-red-50',
+      text: 'text-red-700',
+      border: 'border-red-200',
+      accent: '#ef4444',
+      label: 'High Risk',
+    },
   };
 
   const riskStyle = riskColorMap[mockResult.riskCategory];
+
+  // No results available state
+  if (resultsKits.length === 0) {
+    return (
+      <div className="flex flex-col min-h-full bg-gray-50">
+        {/* Header */}
+        <div className="bg-white px-5 pt-5 pb-4 border-b border-gray-100">
+          <h1 className="text-xl font-bold text-gray-900">Your Results</h1>
+        </div>
+
+        {/* No Results Message */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-24">
+          <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-4">
+            <Info className="w-8 h-8 text-blue-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            No Results Yet
+          </h2>
+          <p className="text-sm text-gray-500 text-center max-w-[260px]">
+            No results available yet. Your tests are still being processed.
+          </p>
+        </div>
+
+        {/* Bottom Tab Bar */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 pb-1 pt-1.5 z-10">
+          <div className="flex items-center justify-around">
+            {tabs.map((tab) => {
+              const isActive = location.pathname === tab.route;
+              return (
+                <button
+                  key={tab.label}
+                  onClick={() => navigate(tab.route)}
+                  className={`flex flex-col items-center gap-0.5 py-1 px-3 rounded-lg transition-colors ${
+                    isActive
+                      ? 'text-primary-600'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <tab.icon
+                    className="w-5 h-5"
+                    strokeWidth={isActive ? 2.5 : 1.5}
+                  />
+                  <span
+                    className={`text-[10px] ${isActive ? 'font-semibold' : 'font-medium'}`}
+                  >
+                    {tab.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
@@ -82,6 +180,25 @@ export default function MobileResults() {
 
       {/* Content */}
       <div className="flex-1 px-5 py-5 pb-24 flex flex-col gap-4">
+        {/* Kit Selector */}
+        {resultsKits.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {resultsKits.map((kit) => (
+              <button
+                key={kit.id}
+                onClick={() => setSelectedKitId(kit.kitId)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                  selectedKitId === kit.kitId
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {kit.kitId}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Risk Category */}
         <div
           className={`rounded-2xl p-5 border ${riskStyle.bg} ${riskStyle.border} flex flex-col items-center`}

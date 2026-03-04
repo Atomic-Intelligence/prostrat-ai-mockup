@@ -100,7 +100,7 @@ export default function WebAiResults() {
   const [approvalNotes, setApprovalNotes] = useState('');
 
   const displayKitId = kitId || mockAiResult.kitId;
-  const patient = mockWebPatients.find((p) => p.activeKit === displayKitId) || mockWebPatients[0];
+  const patient = mockWebPatients.find((p) => p.kits.includes(displayKitId)) || mockWebPatients[0];
 
   const riskCategoryConfig = {
     LOW: { label: 'LOW', className: 'bg-green-100 text-green-700 border-green-300' },

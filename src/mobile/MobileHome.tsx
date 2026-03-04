@@ -1,18 +1,19 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import {
   Bell,
   QrCode,
   Activity,
   FileText,
-  BookOpen,
+  ClipboardCheck,
   Home,
   BarChart3,
   ClipboardList,
   User,
   ChevronRight,
   FlaskConical,
+  Copy,
 } from 'lucide-react';
-import { mockUser, mockKit, mockNotifications } from '../data/mock';
+import { mockUser, mockKit, mockNotifications, mockMobileKits, mockMobilePatient } from '../data/mock';
 
 export default function MobileHome() {
   const navigate = useNavigate();
@@ -38,9 +39,9 @@ export default function MobileHome() {
       color: 'bg-green-50 text-green-600',
     },
     {
-      label: 'Learn More',
-      icon: BookOpen,
-      route: '/mobile/home',
+      label: 'Health Survey',
+      icon: ClipboardCheck,
+      route: '/mobile/survey',
       color: 'bg-amber-50 text-amber-600',
     },
   ];
@@ -53,6 +54,43 @@ export default function MobileHome() {
   ];
 
   const unreadCount = mockNotifications.filter((n) => !n.read).length;
+
+  // Get the latest kit (last in the array, most recently ordered)
+  const latestKit = mockMobileKits[mockMobileKits.length - 1];
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'ordered': return 'Ordered';
+      case 'shipped': return 'Shipped';
+      case 'registered': return 'Registered';
+      case 'sample_received': return 'Sample Received';
+      case 'processing': return 'Processing';
+      case 'analysis_complete': return 'Analysis Complete';
+      case 'results_available': return 'Results Available';
+      default: return status;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'ordered':
+      case 'shipped':
+        return { dot: 'bg-gray-400', text: 'text-gray-200' };
+      case 'registered':
+      case 'sample_received':
+        return { dot: 'bg-blue-400', text: 'text-blue-200' };
+      case 'processing':
+        return { dot: 'bg-amber-400 animate-pulse', text: 'text-amber-200' };
+      case 'analysis_complete':
+        return { dot: 'bg-purple-400', text: 'text-purple-200' };
+      case 'results_available':
+        return { dot: 'bg-green-400', text: 'text-green-200' };
+      default:
+        return { dot: 'bg-gray-400', text: 'text-gray-200' };
+    }
+  };
+
+  const statusColor = latestKit ? getStatusColor(latestKit.status) : null;
 
   return (
     <div className="flex flex-col min-h-full bg-gray-50">
@@ -75,34 +113,96 @@ export default function MobileHome() {
           </button>
         </div>
 
-        {/* Active Test Card */}
+        {/* Multi-Kit Summary Card */}
         <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <FlaskConical className="w-5 h-5 text-white" />
+          {mockMobileKits.length > 1 ? (
+            <>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                    <FlaskConical className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-white font-semibold text-sm">
+                    {mockMobileKits.length} Active Kits
+                  </span>
+                </div>
+                <Link
+                  to="/mobile/kits"
+                  className="text-xs font-medium text-white/80 hover:text-white flex items-center gap-1"
+                >
+                  View All
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+              {latestKit && (
+                <div className="flex items-center gap-3 bg-white/10 rounded-xl p-3">
+                  <div className="flex-1">
+                    <p className="text-white/70 text-[10px] font-medium uppercase tracking-wide">
+                      Latest Kit
+                    </p>
+                    <p className="text-white font-semibold text-sm">
+                      {latestKit.kitId}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 ${statusColor?.dot} rounded-full`} />
+                    <span className={`${statusColor?.text} text-xs font-medium`}>
+                      {getStatusLabel(latestKit.status)}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <FlaskConical className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-white/70 text-xs font-medium uppercase tracking-wide">
+                  Active Test
+                </p>
+                <p className="text-white font-semibold text-sm">
+                  {latestKit?.kitId || mockKit.kitId}
+                </p>
+              </div>
+              {latestKit && (
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2 h-2 ${statusColor?.dot} rounded-full`} />
+                  <span className={`${statusColor?.text} text-xs font-medium`}>
+                    {getStatusLabel(latestKit.status)}
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="flex-1">
-              <p className="text-white/70 text-xs font-medium uppercase tracking-wide">
-                Active Test
-              </p>
-              <p className="text-white font-semibold text-sm">
-                {mockKit.kitId}
-              </p>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-              <span className="text-amber-200 text-xs font-medium">
-                Processing
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 
       {/* Content Area */}
       <div className="flex-1 px-5 -mt-2 pb-24">
+        {/* Patient ID Card */}
+        <div className="mt-5 mb-5 bg-blue-50 rounded-2xl p-4 border border-blue-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                Your Patient ID
+              </p>
+              <p className="text-2xl font-bold text-blue-900 font-mono mt-1">
+                {mockMobilePatient.patientId}
+              </p>
+            </div>
+            <button className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center hover:bg-blue-200 transition-colors">
+              <Copy className="w-4 h-4 text-blue-600" />
+            </button>
+          </div>
+          <p className="text-xs text-blue-600 mt-2">
+            Share this ID with your physician to link your records
+          </p>
+        </div>
+
         {/* Quick Actions */}
-        <div className="mt-5 mb-5">
+        <div className="mb-5">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
             Quick Actions
           </h2>

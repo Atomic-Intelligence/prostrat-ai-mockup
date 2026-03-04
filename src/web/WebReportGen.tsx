@@ -38,7 +38,7 @@ export default function WebReportGen() {
   const navigate = useNavigate();
 
   const displayKitId = kitId || mockAiResult.kitId;
-  const patient = mockWebPatients.find((p) => p.activeKit === displayKitId) || mockWebPatients[0];
+  const patient = mockWebPatients.find((p) => p.kits.includes(displayKitId)) || mockWebPatients[0];
 
   const [template, setTemplate] = useState<string>(templates[0]);
   const [language, setLanguage] = useState<string>(languages[0]);

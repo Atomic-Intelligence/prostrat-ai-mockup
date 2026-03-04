@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   CheckCircle2,
@@ -10,11 +11,27 @@ import {
   MessageCircle,
   Loader2,
 } from 'lucide-react';
-import { mockKit } from '../data/mock';
+import { mockKit, mockCompletedKit, mockMobileKits } from '../data/mock';
+
+const kitStagesMap: Record<string, typeof mockKit> = {
+  'PST-2026-M3N4': mockKit,
+  'PST-2026-A1B2': mockCompletedKit,
+};
 
 export default function MobileStatus() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Build selectable kits from mockMobileKits
+  const selectableKits = mockMobileKits.map((k) => ({
+    id: k.id,
+    kitId: k.kitId,
+    status: k.status,
+  }));
+
+  const [selectedKitId, setSelectedKitId] = useState(selectableKits[0]?.kitId || mockKit.kitId);
+
+  const selectedKitData = kitStagesMap[selectedKitId] || mockKit;
 
   const tabs = [
     { label: 'Home', icon: Home, route: '/mobile/home' },
@@ -67,13 +84,32 @@ export default function MobileStatus() {
         <div className="flex items-center gap-2 mt-2">
           <span className="text-sm text-gray-500">Kit ID:</span>
           <span className="text-sm font-mono font-semibold text-primary-600 bg-primary-50 px-2.5 py-0.5 rounded-md">
-            {mockKit.kitId}
+            {selectedKitId}
           </span>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 px-5 py-5 pb-24">
+        {/* Kit Selector */}
+        {selectableKits.length > 1 && (
+          <div className="flex gap-2 mb-4 overflow-x-auto pb-1">
+            {selectableKits.map((kit) => (
+              <button
+                key={kit.id}
+                onClick={() => setSelectedKitId(kit.kitId)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                  selectedKitId === kit.kitId
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {kit.kitId}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Timeline */}
         <div className="bg-white rounded-2xl shadow-sm p-5">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">
@@ -81,12 +117,12 @@ export default function MobileStatus() {
           </h2>
 
           <div className="flex flex-col">
-            {mockKit.stages.map((stage, index) => (
+            {selectedKitData.stages.map((stage, index) => (
               <div key={stage.id} className="flex gap-4">
                 {/* Timeline Column */}
                 <div className="flex flex-col items-center">
                   {getStageIcon(stage.status)}
-                  {index < mockKit.stages.length - 1 && (
+                  {index < selectedKitData.stages.length - 1 && (
                     <div
                       className={`w-0.5 flex-1 my-1 ${getLineColor(stage.status)}`}
                     />
@@ -95,7 +131,7 @@ export default function MobileStatus() {
 
                 {/* Content Column */}
                 <div
-                  className={`flex-1 pb-6 ${index === mockKit.stages.length - 1 ? 'pb-0' : ''}`}
+                  className={`flex-1 pb-6 ${index === selectedKitData.stages.length - 1 ? 'pb-0' : ''}`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
@@ -137,7 +173,7 @@ export default function MobileStatus() {
           <div>
             <p className="text-xs text-gray-500">Estimated time remaining</p>
             <p className="text-sm font-semibold text-gray-900">
-              {mockKit.estimatedCompletion}
+              {selectedKitData.estimatedCompletion}
             </p>
           </div>
         </div>

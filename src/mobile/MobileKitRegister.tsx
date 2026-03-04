@@ -46,12 +46,25 @@ export default function MobileKitRegister() {
           >
             View Test Status
           </button>
-          <button
-            onClick={() => navigate('/mobile/home')}
-            className="mt-3 text-sm text-primary-600 font-medium hover:text-primary-700"
-          >
-            Back to Home
-          </button>
+
+          {/* Survey Prompt */}
+          <div className="mt-6 w-full max-w-[280px] text-center">
+            <p className="text-xs text-gray-500 mb-3">
+              Complete a health survey to help your healthcare team.
+            </p>
+            <button
+              onClick={() => navigate('/mobile/survey')}
+              className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-colors"
+            >
+              Complete Survey
+            </button>
+            <button
+              onClick={() => navigate('/mobile/home')}
+              className="mt-2 text-sm text-gray-500 font-medium hover:text-gray-700"
+            >
+              Skip for now
+            </button>
+          </div>
         </div>
       </div>
     );
