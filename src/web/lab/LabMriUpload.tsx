@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronRight,
   Upload,
   CheckCircle2,
   FileImage,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   mockPatients,
@@ -19,6 +20,7 @@ import { getLabSafePatient } from './labUtils';
 
 export default function LabMriUpload() {
   const { patientId } = useParams<{ patientId: string }>();
+  const navigate = useNavigate();
   const { role } = useRole();
 
   const patient = mockPatients.find((p) => p.id === patientId) ?? mockPatients[0];
@@ -54,9 +56,10 @@ export default function LabMriUpload() {
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-            <Link to="/web/kits" className="hover:text-blue-600">
+            <button onClick={() => navigate('/web/kits')} className="hover:text-blue-600 flex items-center gap-1">
+              <ArrowLeft className="w-3.5 h-3.5" />
               Kits
-            </Link>
+            </button>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-gray-900 font-medium">Upload MRI</span>
           </nav>

@@ -17,7 +17,8 @@ export default function WebPatientList() {
   const { role } = useRole();
   const navigate = useNavigate();
   useEffect(() => {
-    if (role !== 'physician') navigate('/web/kits', { replace: true });
+    if (role === 'physician') navigate('/web/dashboard', { replace: true });
+    else navigate('/web/kits', { replace: true });
   }, [role, navigate]);
 
   const [search, setSearch] = useState('');
@@ -113,7 +114,7 @@ export default function WebPatientList() {
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Patient ID</th>
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Name</th>
-                  <th className="text-left px-6 py-3 font-medium text-gray-500">PID</th>
+                  <th className="text-left px-6 py-3 font-medium text-gray-500">Personal ID</th>
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Kits</th>
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Latest Kit Status</th>
                   <th className="text-left px-6 py-3 font-medium text-gray-500">Last Updated</th>
@@ -269,7 +270,7 @@ export default function WebPatientList() {
               <div className="pt-2 border-t border-gray-200">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   <Link2 className="w-3.5 h-3.5 inline mr-1" />
-                  Link Patient ID (Mobile PID)
+                  Link Personal ID (Mobile PID)
                 </label>
                 <div className="flex gap-2">
                   <input

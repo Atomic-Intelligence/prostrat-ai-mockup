@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
+  ArrowLeft,
   Home,
   ClipboardList,
   BarChart3,
@@ -121,7 +122,15 @@ export default function MobileResults() {
       <div className="flex flex-col min-h-full bg-gray-50">
         {/* Header */}
         <div className="bg-white px-5 pt-5 pb-4 border-b border-gray-100">
-          <h1 className="text-xl font-bold text-gray-900">Your Results</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/mobile/home')}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-700" />
+            </button>
+            <h1 className="text-xl font-bold text-gray-900">Your Results</h1>
+          </div>
         </div>
 
         {/* No Results Message */}
@@ -174,8 +183,18 @@ export default function MobileResults() {
     <div className="flex flex-col min-h-full bg-gray-50">
       {/* Header */}
       <div className="bg-white px-5 pt-5 pb-4 border-b border-gray-100">
-        <h1 className="text-xl font-bold text-gray-900">Your Results</h1>
-        <p className="text-sm text-gray-500 mt-1">{mockResult.dateOfResult}</p>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/mobile/home')}
+            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">Your Results</h1>
+            <p className="text-sm text-gray-500 mt-0.5">{mockResult.dateOfResult}</p>
+          </div>
+        </div>
       </div>
 
       {/* Content */}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   ChevronRight,
   CheckCircle2,
@@ -9,6 +9,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   Brain,
+  Download,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   mockKits,
@@ -17,6 +19,7 @@ import {
   mockClinicalData,
   mockAiResults,
   mockUsers,
+  mockSurveyData,
   type KitStatus,
 } from '../../data/mock';
 import { useRole } from '../../context/RoleContext';
@@ -62,6 +65,13 @@ export default function LabKitDetail() {
   const navigate = useNavigate();
   const { role } = useRole();
   const [qcActionDone, setQcActionDone] = useState<'approved' | 'rejected' | null>(null);
+  const [aiAction, setAiAction] = useState<'idle' | 'running' | 'run_success' | 'export_success'>('idle');
+  const [showImportAi, setShowImportAi] = useState(false);
+  const [importRiskScore, setImportRiskScore] = useState('');
+  const [importRiskCategory, setImportRiskCategory] = useState('LOW');
+  const [importConfidence, setImportConfidence] = useState('');
+  const [importModelVersion, setImportModelVersion] = useState('ProSTRAT-v3.2.1');
+  const [importAiSuccess, setImportAiSuccess] = useState(false);
 
   // Find kit by kitId (the display ID like PST-2026-A1B2)
   const kit = mockKits.find((k) => k.kitId === kitId) ?? mockKits[0];
@@ -71,6 +81,7 @@ export default function LabKitDetail() {
   const clinicalData = mockClinicalData.find((c) => c.kitId === kit.id);
   const aiResult = mockAiResults.find((r) => r.kitId === kit.id);
   const orderedByUser = mockUsers.find((u) => u.id === kit.orderedBy);
+  const surveyData = mockSurveyData.find((s) => s.kitId === kit.id);
 
   // Determine which steps are completed
   const currentStepIndex = kitLifecycleSteps.indexOf(kit.status);
@@ -81,9 +92,10 @@ export default function LabKitDetail() {
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-            <Link to="/web/kits" className="hover:text-blue-600">
+            <button onClick={() => navigate('/web/kits')} className="hover:text-blue-600 flex items-center gap-1">
+              <ArrowLeft className="w-3.5 h-3.5" />
               Kits
-            </Link>
+            </button>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-gray-900 font-medium">Kit {kit.kitId}</span>
           </nav>
@@ -249,6 +261,64 @@ export default function LabKitDetail() {
           </div>
         )}
 
+        {/* Survey Data */}
+        {surveyData && (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Survey Data</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase">Symptoms</p>
+                {[
+                  { label: 'Urinary Symptoms', value: surveyData.urinarySymptoms },
+                  { label: 'Pain/Discomfort', value: surveyData.painOrDiscomfort },
+                  { label: 'Blood in Urine', value: surveyData.bloodInUrine },
+                  { label: 'Frequent Urination', value: surveyData.frequentUrination },
+                  { label: 'Difficulty Urinating', value: surveyData.difficultyUrinating },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${item.value ? 'bg-red-400' : 'bg-gray-300'}`} />
+                    <span className={`text-xs ${item.value ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase">Family History</p>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${surveyData.familyHistoryProstateCancer ? 'bg-red-400' : 'bg-gray-300'}`} />
+                  <span className={`text-xs ${surveyData.familyHistoryProstateCancer ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>Prostate Cancer</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${surveyData.familyHistoryOtherCancer ? 'bg-red-400' : 'bg-gray-300'}`} />
+                  <span className={`text-xs ${surveyData.familyHistoryOtherCancer ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>Other Cancer</span>
+                </div>
+                {surveyData.familyRelationship && (
+                  <p className="text-xs text-gray-600 mt-1">Relation: {surveyData.familyRelationship}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase">Medications</p>
+                <p className="text-xs text-gray-700">{surveyData.currentMedications || 'None reported'}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-gray-500 uppercase">Previous Procedures</p>
+                {[
+                  { label: 'Previous Biopsy', value: surveyData.previousBiopsy },
+                  { label: 'Previous Surgery', value: surveyData.previousSurgery },
+                  { label: 'Previous Radiation', value: surveyData.previousRadiation },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${item.value ? 'bg-amber-400' : 'bg-gray-300'}`} />
+                    <span className={`text-xs ${item.value ? 'text-gray-900 font-medium' : 'text-gray-400'}`}>{item.label}</span>
+                  </div>
+                ))}
+                {surveyData.procedureDetails && (
+                  <p className="text-xs text-gray-600 mt-1">Details: {surveyData.procedureDetails}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Lab Supervisor Only Section */}
         {role === 'lab_supervisor' && (
           <div className="space-y-6">
@@ -300,6 +370,141 @@ export default function LabKitDetail() {
                   >
                     <Upload className="w-4 h-4" />
                     Upload MRI
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* AI Model Actions */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Brain className="w-5 h-5 text-purple-600" />
+                <h2 className="text-lg font-semibold text-gray-900">AI Model Actions</h2>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                The AI service processes CE-MS, clinical, survey, and MRI data. It may run on a separate secure system requiring manual data exchange.
+              </p>
+
+              {aiAction === 'running' ? (
+                <div className="flex items-center justify-center gap-3 py-8">
+                  <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-sm text-gray-600">Running AI model...</p>
+                </div>
+              ) : aiAction === 'run_success' ? (
+                <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  <p className="text-sm text-green-700 font-medium">AI model execution initiated. Results will appear when processing is complete.</p>
+                </div>
+              ) : aiAction === 'export_success' ? (
+                <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <CheckCircle2 className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm text-blue-700 font-medium">Data package exported successfully.</p>
+                    <p className="text-xs text-blue-600 mt-0.5 font-mono">prostrat_kit_{kit.kitId}_export.json</p>
+                    <p className="text-xs text-blue-500 mt-0.5">Contains: CE-MS, clinical, survey, MRI metadata</p>
+                  </div>
+                </div>
+              ) : showImportAi ? (
+                <div className="space-y-4">
+                  {importAiSuccess ? (
+                    <div className="text-center py-4">
+                      <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                      <p className="text-sm font-semibold text-gray-900">AI result imported for kit {kit.kitId}.</p>
+                      <button
+                        onClick={() => { setShowImportAi(false); setImportAiSuccess(false); }}
+                        className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        Done
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Risk Score (0-100)</label>
+                          <input
+                            type="number" min="0" max="100"
+                            value={importRiskScore}
+                            onChange={(e) => setImportRiskScore(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Risk Category</label>
+                          <select
+                            value={importRiskCategory}
+                            onChange={(e) => setImportRiskCategory(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white"
+                          >
+                            <option value="LOW">LOW</option>
+                            <option value="INTERMEDIATE">INTERMEDIATE</option>
+                            <option value="HIGH">HIGH</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Confidence (0-1)</label>
+                          <input
+                            type="number" min="0" max="1" step="0.01"
+                            value={importConfidence}
+                            onChange={(e) => setImportConfidence(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Model Version</label>
+                          <input
+                            type="text"
+                            value={importModelVersion}
+                            onChange={(e) => setImportModelVersion(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => setShowImportAi(false)}
+                          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={() => { if (importRiskScore) setImportAiSuccess(true); }}
+                          className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          Import Result
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <button
+                    onClick={() => {
+                      setAiAction('running');
+                      setTimeout(() => setAiAction('run_success'), 1500);
+                    }}
+                    className="p-4 border-2 border-green-200 rounded-xl hover:bg-green-50 transition-colors text-left"
+                  >
+                    <Brain className="w-6 h-6 text-green-600 mb-2" />
+                    <h3 className="text-sm font-semibold text-gray-900">Run AI Model</h3>
+                    <p className="text-xs text-gray-500 mt-1">Automatically submit data to the AI service</p>
+                  </button>
+                  <button
+                    onClick={() => setAiAction('export_success')}
+                    className="p-4 border-2 border-blue-200 rounded-xl hover:bg-blue-50 transition-colors text-left"
+                  >
+                    <Download className="w-6 h-6 text-blue-600 mb-2" />
+                    <h3 className="text-sm font-semibold text-gray-900">Export Data for AI</h3>
+                    <p className="text-xs text-gray-500 mt-1">Download data package for offline processing</p>
+                  </button>
+                  <button
+                    onClick={() => setShowImportAi(true)}
+                    className="p-4 border-2 border-purple-200 rounded-xl hover:bg-purple-50 transition-colors text-left"
+                  >
+                    <Upload className="w-6 h-6 text-purple-600 mb-2" />
+                    <h3 className="text-sm font-semibold text-gray-900">Import AI Result</h3>
+                    <p className="text-xs text-gray-500 mt-1">Manually enter AI model results</p>
                   </button>
                 </div>
               )}

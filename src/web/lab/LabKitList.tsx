@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Eye, ChevronLeft, ChevronRight, Upload, X, CheckCircle2 } from 'lucide-react';
 import { mockKits, mockPatients, mockCeMsData, mockUsers } from '../../data/mock';
 import WebRoleHeader from '../WebRoleHeader';
 import { getLabSafePatient, getKitStatusLabel, getKitStatusColor, getQcStatusColor } from './labUtils';
@@ -13,6 +13,13 @@ export default function LabKitList() {
   const [statusFilter, setStatusFilter] = useState('');
   const [qcFilter, setQcFilter] = useState('');
   const [page, setPage] = useState(1);
+  const [showCeMsImport, setShowCeMsImport] = useState(false);
+  const [importKitId, setImportKitId] = useState('');
+  const [importQualityScore, setImportQualityScore] = useState('');
+  const [importTotalPeptides, setImportTotalPeptides] = useState('');
+  const [importInstrumentId, setImportInstrumentId] = useState('CE-MS-INST-01');
+  const [importFile, setImportFile] = useState(false);
+  const [importSuccess, setImportSuccess] = useState(false);
 
   const enrichedKits = useMemo(() => {
     return mockKits.map((kit) => {
@@ -74,7 +81,16 @@ export default function LabKitList() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Kits</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">Kits</h1>
+            <button
+              onClick={() => { setShowCeMsImport(true); setImportSuccess(false); }}
+              className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Upload className="w-4 h-4" />
+              Import CE-MS
+            </button>
+          </div>
           <WebRoleHeader />
         </div>
       </header>
@@ -237,6 +253,129 @@ export default function LabKitList() {
           </div>
         </div>
       </main>
+
+      {showCeMsImport && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">Import CE-MS Results</h2>
+              <button onClick={() => setShowCeMsImport(false)} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              {importSuccess ? (
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">Import Successful</h3>
+                  <p className="text-sm text-gray-500">CE-MS results imported for kit {importKitId}.</p>
+                  <button
+                    onClick={() => setShowCeMsImport(false)}
+                    className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Kit ID</label>
+                    <select
+                      value={importKitId}
+                      onChange={(e) => setImportKitId(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    >
+                      <option value="">Select Kit...</option>
+                      {enrichedKits
+                        .filter((k) => ['processing', 'sample_received'].includes(k.status))
+                        .map((k) => (
+                          <option key={k.id} value={k.kitId}>{k.kitId} — {getKitStatusLabel(k.status)}</option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CE-MS Data File</label>
+                    {importFile ? (
+                      <div className="border-2 border-green-300 bg-green-50 rounded-lg p-4 text-center">
+                        <CheckCircle2 className="w-6 h-6 text-green-500 mx-auto mb-1" />
+                        <p className="text-sm font-medium text-green-700">cems_run_data.mzML</p>
+                        <p className="text-xs text-green-600">4.2 MB uploaded</p>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setImportFile(true)}
+                        className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-teal-400 hover:bg-teal-50 transition-colors cursor-pointer"
+                      >
+                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-sm text-gray-600">Click to upload CE-MS data file</p>
+                        <p className="text-xs text-gray-400 mt-1">.mzML, .raw, .csv</p>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Quality Score</label>
+                      <input
+                        type="number"
+                        min="0" max="100"
+                        placeholder="0-100"
+                        value={importQualityScore}
+                        onChange={(e) => setImportQualityScore(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Total Peptides</label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 14832"
+                        value={importTotalPeptides}
+                        onChange={(e) => setImportTotalPeptides(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Instrument ID</label>
+                    <select
+                      value={importInstrumentId}
+                      onChange={(e) => setImportInstrumentId(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+                    >
+                      <option value="CE-MS-INST-01">CE-MS-INST-01</option>
+                      <option value="CE-MS-INST-02">CE-MS-INST-02</option>
+                      <option value="CE-MS-INST-03">CE-MS-INST-03</option>
+                    </select>
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => setShowCeMsImport(false)}
+                      className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (importKitId && importFile) setImportSuccess(true);
+                      }}
+                      disabled={!importKitId || !importFile}
+                      className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Import Results
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

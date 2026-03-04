@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
+  ArrowLeft,
   ChevronRight,
   User,
   Mail,
@@ -13,11 +14,16 @@ import {
   ArrowRight,
   Upload,
   Image as ImageIcon,
+  PackagePlus,
+  Hash,
+  Link2,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   mockWebPatients,
   mockKits,
   mockMriData,
+  mockPhysicianPatients,
   type PatientStatus,
   type KitStatus,
 } from '../data/mock';
@@ -59,6 +65,13 @@ export default function WebPatientDetail() {
 
   const [selectedKitId, setSelectedKitId] = useState<string>(patient?.latestKitId || '');
 
+  const [showOrderKitConfirm, setShowOrderKitConfirm] = useState(false);
+  const [showAddKitForm, setShowAddKitForm] = useState(false);
+  const [newKitId, setNewKitId] = useState('');
+  const [showLinkPersonForm, setShowLinkPersonForm] = useState(false);
+  const [linkPidInput, setLinkPidInput] = useState('');
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
   // All kits belonging to this patient
   const patientKits = mockKits.filter((k) =>
     patient?.kits.includes(k.kitId),
@@ -69,6 +82,12 @@ export default function WebPatientDetail() {
 
   // MRI data for this patient
   const patientMriData = mockMriData.filter((m) => m.patientId === patient.id);
+
+  // Check if this patient has a linked Person
+  const physicianPatient = mockPhysicianPatients.find(
+    (pp) => pp.patientId === patient.id
+  );
+  const isLinked = !!physicianPatient?.linkedPatientId;
 
   // Build timeline from the selected kit's dates
   const kitTimeline = useMemo(() => {
@@ -95,7 +114,11 @@ export default function WebPatientDetail() {
         <div className="max-w-7xl mx-auto">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-gray-500 mb-3">
-            <button onClick={() => navigate('/web/patients')} className="hover:text-blue-600">
+            <button
+              onClick={() => navigate('/web/dashboard')}
+              className="hover:text-blue-600 flex items-center gap-1"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
               Patients
             </button>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -188,6 +211,20 @@ export default function WebPatientDetail() {
                     <p className="text-sm text-gray-900">{patient.dateOfBirth}</p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <Link2 className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <p className="text-xs text-gray-500">Personal ID</p>
+                    {isLinked ? (
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm text-indigo-600 font-mono font-medium">{physicianPatient?.linkedPatientId}</p>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-400 italic">Not linked</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -232,6 +269,152 @@ export default function WebPatientDetail() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* Patient Actions */}
+            <div className="lg:col-span-3 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">Patient Actions</h3>
+
+              {/* Success message */}
+              {actionSuccess && (
+                <div className="flex items-center gap-2 mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <p className="text-sm text-green-700 font-medium">{actionSuccess}</p>
+                  <button onClick={() => setActionSuccess(null)} className="ml-auto text-green-400 hover:text-green-600">&times;</button>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-3 mb-4">
+                <button
+                  onClick={() => { setShowOrderKitConfirm(true); setActionSuccess(null); }}
+                  className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-amber-200"
+                >
+                  <PackagePlus className="w-4 h-4" />
+                  Order New Kit
+                </button>
+                <button
+                  onClick={() => { setShowAddKitForm(true); setActionSuccess(null); }}
+                  className="flex items-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-blue-200"
+                >
+                  <Hash className="w-4 h-4" />
+                  Add Kit ID
+                </button>
+                {!isLinked && (
+                  <button
+                    onClick={() => { setShowLinkPersonForm(true); setActionSuccess(null); }}
+                    className="flex items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border border-indigo-200"
+                  >
+                    <Link2 className="w-4 h-4" />
+                    Link Person
+                  </button>
+                )}
+              </div>
+
+              {/* Personal ID link status */}
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-500">Personal ID:</span>
+                {isLinked ? (
+                  <span className="flex items-center gap-1.5 text-green-700 font-mono font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {physicianPatient?.linkedPatientId}
+                  </span>
+                ) : (
+                  <span className="text-gray-400 italic">Not linked</span>
+                )}
+              </div>
+
+              {/* Order Kit Confirmation */}
+              {showOrderKitConfirm && (
+                <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                  <p className="text-sm text-gray-700 mb-3">Order a new kit for <strong>{patient.name}</strong>?</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowOrderKitConfirm(false);
+                        setActionSuccess(`Kit ordered for ${patient.name}. Kit ID will be assigned when shipped.`);
+                      }}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Confirm Order
+                    </button>
+                    <button
+                      onClick={() => setShowOrderKitConfirm(false)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Add Kit ID Form */}
+              {showAddKitForm && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-gray-700 mb-3">Enter kit ID to add to <strong>{patient.name}</strong>:</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="PST-XXXX-XXXX"
+                      value={newKitId}
+                      onChange={(e) => setNewKitId(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                      maxLength={13}
+                    />
+                    <button
+                      onClick={() => {
+                        if (newKitId.trim()) {
+                          setShowAddKitForm(false);
+                          setActionSuccess(`Kit ${newKitId} added to patient ${patient.name}.`);
+                          setNewKitId('');
+                        }
+                      }}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Add Kit
+                    </button>
+                    <button
+                      onClick={() => { setShowAddKitForm(false); setNewKitId(''); }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Link Person Form */}
+              {showLinkPersonForm && (
+                <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                  <p className="text-sm text-gray-700 mb-3">Enter Personal ID to link to <strong>{patient.name}</strong>:</p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="PID-XXXX"
+                      value={linkPidInput}
+                      onChange={(e) => setLinkPidInput(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+                    />
+                    <button
+                      onClick={() => {
+                        if (linkPidInput.trim()) {
+                          setShowLinkPersonForm(false);
+                          setActionSuccess(`Person ${linkPidInput} linked to patient ${patient.name}.`);
+                          setLinkPidInput('');
+                        }
+                      }}
+                      className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Link
+                    </button>
+                    <button
+                      onClick={() => { setShowLinkPersonForm(false); setLinkPidInput(''); }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Quick Links */}

@@ -181,12 +181,12 @@ export default function MobileHome() {
 
       {/* Content Area */}
       <div className="flex-1 px-5 -mt-2 pb-24">
-        {/* Patient ID Card */}
+        {/* Personal ID Card */}
         <div className="mt-5 mb-5 bg-blue-50 rounded-2xl p-4 border border-blue-100">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-blue-600 uppercase tracking-wide">
-                Your Patient ID
+                Your Personal ID
               </p>
               <p className="text-2xl font-bold text-blue-900 font-mono mt-1">
                 {mockMobilePatient.patientId}
@@ -197,7 +197,7 @@ export default function MobileHome() {
             </button>
           </div>
           <p className="text-xs text-blue-600 mt-2">
-            Share this ID with your physician to link your records
+            Share this Personal ID with your physician to link your records
           </p>
         </div>
 
