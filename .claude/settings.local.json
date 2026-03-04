@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create vite@latest . -- --template react-ts)",
+      "Bash(npx --yes create-vite@latest temp-init --template react-ts)",
+      "Bash(npm install)",
+      "Bash(npm install react-router-dom lucide-react recharts tailwindcss @tailwindcss/vite)",
+      "Bash(npx tsc --noEmit --pretty)",
+      "Bash(node -e \":*)",
+      "Bash(npx tsc --noEmit --strict src/data/mock.ts)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npm run build)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node -e \"console.log\\(process.execPath\\)\")",
+      "Bash(git init)",
+      "Bash(git add -A)"
+    ]
+  }
+}
