@@ -21,7 +21,8 @@
       "Bash(npx tsc --noEmit src/data/mock.ts)",
       "Bash(npx vite build)",
       "Bash(git add src/context/RoleContext.tsx src/context/MobilePatientContext.tsx src/web/WebRoleHeader.tsx src/web/lab/labUtils.ts src/web/lab/LabKitList.tsx src/web/lab/LabKitDetail.tsx src/web/lab/LabDashboard.tsx src/web/lab/LabMriUpload.tsx src/mobile/MobileKitList.tsx src/mobile/MobileSurvey.tsx src/App.tsx src/data/mock.ts src/mobile/MobileHome.tsx src/mobile/MobileKitRegister.tsx src/mobile/MobileResults.tsx src/mobile/MobileStatus.tsx src/web/WebAiResults.tsx src/web/WebClinicalData.tsx src/web/WebDashboard.tsx src/web/WebPatientDetail.tsx src/web/WebPatientList.tsx src/web/WebReportGen.tsx .claude/launch.json)",
-      "Bash(git push origin main)"
+      "Bash(git push origin main)",
+      "Bash(git add .claude/launch.json .claude/settings.local.json)"
     ]
   }
 }
